@@ -1,61 +1,65 @@
-import {useEffect,useState} from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-function Profile(){
-    const [user,setUser]= useState(null);
-    const [error,setError]=useState("");
+function Profile({ setIsAuthenticated }) {
+  const [user, setUser] = useState(null);
+  const navigate = useNavigate();
 
-    useEffect(()=>{
-        const token=localStorage.getItem("token");
-        console.log("token in profile",token);
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    setIsAuthenticated(false);
+    navigate("/login");
+  };
 
-        if(!token){
-            setError("Not logged in");
-            return;
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
+    const fetchProfile = async () => {
+      try {
+        const response = await fetch(
+          "http://localhost:5000/api/auth/profile",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          localStorage.removeItem("token");
+          navigate("/login");
+          return;
         }
 
-        const fetchProfile =async()=>{
-            try{
-                const response=await fetch(
-                    "http://localhost:5000/api/auth/profile",
-                    {
-                        method:"GET",
-                        headers:{
-                            Authorization:`Bearer ${token}`,
-                        },
-                    }
-                );
+        const data = await response.json();
+        setUser(data);
+      } catch (err) {
+        localStorage.removeItem("token");
+        navigate("/login");
+      }
+    };
 
-                const data =await response.json();
+    fetchProfile();
+  }, [navigate]);
 
-                if (!response.ok){
-                    setError(data.message || "Access denied");
-                    return;
-                }
+  if (!user) {
+    return <h3>Loading...</h3>;
+  }
 
-                setUser(data);
+  return (
+    <div className="register-container">
+      <h2>Profile</h2>
+      <p><b>Name:</b> {user.name}</p>
+      <p><b>Email:</b> {user.email}</p>
 
-            }catch(err){
-                setError("Server error");
-            }
-        };
-        fetchProfile();
-    },[]);
-
-    if (error){
-        return <h3>{error}</h3>;
-    }
-
-    if (!user){
-        return <h3>Loading...</h3>
-    }
-
-    return (
-        <div className="register-container">
-            <h2>Profile</h2>
-            <p><b>Name:</b>{user.name}</p>
-            <p><b>Email:</b>{user.email}</p>
-        </div>
-    );
+      <button onClick={handleLogout}>Logout</button>
+    </div>
+  );
 }
 
 export default Profile;

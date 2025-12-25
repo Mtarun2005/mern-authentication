@@ -1,9 +1,12 @@
 import {useState} from "react";
+import { useNavigate } from "react-router-dom";
 import "../styles/register.css";
 
-function Login(){
+function Login({ setIsAuthenticated }) {
     const [email,setEmail]=useState("");
     const [password,setPassword]=useState("");
+    const navigate = useNavigate();
+
 
     const handleLogin=async (e)=>{
         e.preventDefault();
@@ -28,8 +31,8 @@ function Login(){
             }
 
             localStorage.setItem("token",data.token);
-
-            alert("Login successful");
+            setIsAuthenticated(true);
+            navigate("/profile");
             console.log("Stored token:",data.token);
 
             setEmail("");
